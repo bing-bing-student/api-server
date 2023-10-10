@@ -23,7 +23,3 @@ redis:
 
 jwt:
   signing_key: liuBingBlog
-
-url:
-  random_string:
-  background_login:

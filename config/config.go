@@ -35,17 +35,10 @@ type JWTConfig struct {
 	SigningKey string `mapstructure:"signing_key"`
 }
 
-// URLConfig 生成随机URL的结构体
-type URLConfig struct {
-	RandomString    string `mapstructure:"random_string"`
-	BackgroundLogin string `mapstructure:"background_login"`
-}
-
 // System 定义项目配置文件结构体
 type System struct {
 	GinConfig   *GinConfig   `mapstructure:"gin"`
 	MySQLConfig *MySQLConfig `mapstructure:"mysql"`
 	RedisConfig *RedisConfig `mapstructure:"redis"`
 	JWTConfig   *JWTConfig   `mapstructure:"jwt"`
-	URLConfig   *URLConfig   `mapstructure:"url"`
 }
