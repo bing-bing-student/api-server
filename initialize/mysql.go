@@ -4,12 +4,13 @@ import (
 	"blog/global"
 	"blog/model"
 	"fmt"
+	"go.uber.org/zap"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"log"
-	"os"
 	"time"
 )
 
@@ -30,8 +31,15 @@ func MySql() {
 	}
 
 	//日志
+	fileLogger := &lumberjack.Logger{
+		Filename:   "./log/mysql.log",
+		MaxSize:    2,
+		MaxBackups: 10,
+		MaxAge:     30,
+		Compress:   false,
+	}
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		log.New(fileLogger, "\r\n", log.LstdFlags),
 		logger.Config{
 			SlowThreshold:             time.Millisecond * 0, // 慢 SQL 阈值
 			LogLevel:                  logger.Info,          // 日志级别
@@ -60,6 +68,6 @@ func MySql() {
 	err = global.DB.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&model.UserInfo{})
 	err = global.DB.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&model.UserLogin{})
 	if err != nil {
-		fmt.Println(err.Error())
+		global.LOGGER.Error("表结构错误:", zap.Error(err))
 	}
 }

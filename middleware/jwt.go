@@ -3,36 +3,35 @@ package middleware
 import (
 	"blog/controller"
 	"blog/utils"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
-// JWT 定义中间件，进行用户权限校验
+// JWT 定义中间件, 进行用户权限校验
 func JWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenString := c.GetHeader("Authorization")
+		accessToken := c.GetHeader("Authorization")
+		accessToken = strings.TrimPrefix(accessToken, "Bearer ")
 
-		fmt.Printf("middle.go:token:%v\n", tokenString)
+		if accessToken != "" {
+			// 校验accessToken
+			claims, err := utils.ParseAccessToken(accessToken)
+			if err == nil {
+				// 短token没有过期的情况对请求放行
+				c.Set("UserID", claims.UserID)
+				c.Next()
+				return
+			}
 
-		if tokenString == "" {
-			c.JSON(http.StatusForbidden, controller.Response{StatusCode: 1, StatusMsg: "token is requested"})
+			// 如果短token无效或过期, 返回特定的状态码, 让前端去拿长token过来, 去请求/refresh-token接口
+			c.JSON(http.StatusUnauthorized, controller.Response{Msg: "access token expired"})
 			c.Abort()
 			return
 		}
 
-		claims, err := utils.ParseToken(tokenString)
-		if err != nil {
-			c.JSON(http.StatusForbidden, controller.Response{StatusCode: 1, StatusMsg: err.Error()})
-			c.Abort()
-			return
-		}
-		userID := claims.UserID
-
-		// 保存userID到Context的key中，可以通过Get()取
-		c.Set("UserID", userID)
-
-		// 执行函数
-		c.Next()
+		// 如果没有提供任何token, 则返回错误
+		c.JSON(http.StatusForbidden, controller.Response{Code: 1002, Msg: "token is required"})
+		c.Abort()
 	}
 }
